@@ -145,9 +145,40 @@ Use `--once` for cron/CI (the scheduler provides the repetition) and `--loop`
 only for a long-running process. Keep `state.json` on persistent storage so the
 bot remembers what it has seen between runs.
 
-**GitHub Actions / serverless:** run with `--once` on a schedule and persist
-`state.json` between runs (e.g. via the Actions cache or an artifact / small
-object store), otherwise every run looks like a "first run".
+### GitHub Actions (free, no server of your own)
+
+A ready-to-use workflow is included at `.github/workflows/monitor.yml`. It runs
+the bot on a schedule and persists `state.json` between runs using the Actions
+cache, so the bot remembers what it has already alerted on.
+
+Setup:
+
+1. **Add the Slack webhook as a repository secret.** In your repo on GitHub go
+   to **Settings → Secrets and variables → Actions → New repository secret**,
+   name it `SLACK_WEBHOOK_URL`, and paste your webhook URL. It is never stored
+   in the repo.
+2. **Edit `config.ci.yaml`** (this one *is* committed — feed URLs and keywords
+   aren't secrets) with your feed URL(s) and keywords, then commit and push.
+3. **Enable Actions** for the repo if it isn't already (Actions tab), and adjust
+   the `cron:` schedule in the workflow to taste.
+
+Notes:
+
+- The workflow uses `--once`; GitHub's cron provides the repetition (5-minute
+  minimum, and scheduled runs are frequently delayed under load — don't expect
+  to-the-minute timing).
+- State is cached with a rolling key. If the cache is ever evicted (GitHub
+  removes caches untouched for 7 days, or over the 10 GB repo limit), the next
+  run looks like a first run and silently re-seeds — you'd miss alerts for that
+  one gap, then resume normally.
+- The very first run seeds silently (no alerts for the existing backlog); new
+  posts after that trigger alerts.
+
+### Other serverless / cron hosts
+
+Run with `--once` on a schedule and persist `state.json` between runs (a small
+volume, object store, or the platform's cache), otherwise every run looks like a
+"first run".
 
 ---
 

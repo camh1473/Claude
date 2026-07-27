@@ -1,0 +1,34 @@
+# Configuration used by the GitHub Actions workflow (.github/workflows/monitor.yml).
+#
+# Unlike config.yaml, THIS file IS committed to the repo so the scheduled job can
+# read it. That's fine: feed URLs and keywords are not secrets. The Slack webhook
+# is NOT put here — it comes from the SLACK_WEBHOOK_URL repository secret at
+# runtime. Edit the feeds and keywords below, then commit this file.
+
+poll_interval_seconds: 900   # unused with --once; the workflow's cron controls timing
+state_file: state.json       # cached between runs by the workflow
+
+sources:
+  - name: "Example Public Page"
+    url: "https://rss.app/feeds/REPLACE_WITH_YOUR_FEED.xml"
+  # - name: "Another Page"
+  #   url: "https://rss.app/feeds/ANOTHER_FEED.json"
+
+match:
+  case_sensitive: false
+  whole_word: false
+  keywords:
+    - "grand opening"
+    - "hiring"
+    - "sale"
+  regexes:
+    - "\\b(20|25|50)% off\\b"
+
+seed_on_first_run: true
+
+# Do NOT put the webhook here. The workflow injects it from the
+# SLACK_WEBHOOK_URL secret, which overrides this empty value.
+slack:
+  webhook_url: ""
+  # username: "Facebook Monitor"
+  # icon_emoji: ":mega:"

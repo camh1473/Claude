@@ -1,0 +1,50 @@
+name: Facebook Page Monitor
+
+# Runs the monitor on a schedule (and on demand). State is persisted between
+# runs via the Actions cache, so the bot remembers which posts it has already
+# alerted on.
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub's cron minimum is 5 minutes, and scheduled runs
+    # are often delayed under load, so don't expect exact timing. Match this to
+    # how often your feed provider actually refreshes.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}   # lets you run it manually from the Actions tab
+
+# Never let two runs overlap and race on the state cache.
+concurrency:
+  group: facebook-page-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Restore the most recent saved state (if any). The unique per-run `key`
+      # means every run writes a fresh cache entry in its post-step, and
+      # `restore-keys` prefix-matches the latest one on the next run.
+      - name: Restore monitor state
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: monitor-state-${{ github.run_id }}
+          restore-keys: |
+            monitor-state-
+
+      - name: Run monitor
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python run.py --config config.ci.yaml --once
