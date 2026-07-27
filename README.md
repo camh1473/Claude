@@ -123,6 +123,24 @@ checks the post's title + body against your rules:
 A post triggers **one** Slack alert listing exactly which keywords/patterns
 matched. See `config.example.yaml` for all options.
 
+### Getting alerts to buzz your phone
+
+Set `slack.mention` so each alert @-mentions you — a mention fires a push
+notification even if the channel is muted, which is the most reliable way to get
+an immediate phone buzz:
+
+```yaml
+slack:
+  mention: "U01234ABC"        # your Slack member id
+  # mention: "here"           # or notify everyone currently in the channel
+  # mention: ["U01234ABC", "U05678XYZ"]   # or a list of people
+```
+
+Find your member id in Slack: **Profile → ⋯ (More) → Copy member ID**. You can
+also set it via the `SLACK_MENTION` environment variable, which overrides the
+config file. Then make sure notifications for that channel are enabled in the
+Slack mobile app.
+
 ### First run doesn't flood you
 
 The first time the bot sees a brand-new feed (no saved state yet), it records

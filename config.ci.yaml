@@ -30,5 +30,9 @@ seed_on_first_run: true
 # SLACK_WEBHOOK_URL secret, which overrides this empty value.
 slack:
   webhook_url: ""
+  # @-mention yourself so alerts push to your phone. Your Slack member ID isn't
+  # secret, so you can set it here, or inject it via the SLACK_MENTION env var /
+  # a repository secret if you'd rather keep it out of the repo.
+  mention: ""   # e.g. "U01234ABC" or "here"
   # username: "Facebook Monitor"
   # icon_emoji: ":mega:"

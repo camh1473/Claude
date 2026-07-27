@@ -47,4 +47,8 @@ jobs:
       - name: Run monitor
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Optional: set a SLACK_MENTION repository secret/variable (your Slack
+          # member id, e.g. U01234ABC) to @-mention yourself. Overrides the
+          # config file if set; harmless if left unset.
+          SLACK_MENTION: ${{ secrets.SLACK_MENTION }}
         run: python run.py --config config.ci.yaml --once

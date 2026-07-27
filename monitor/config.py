@@ -8,6 +8,7 @@ never have to commit a secret.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -46,6 +47,9 @@ class SlackConfig:
     webhook_url: str = ""
     username: Optional[str] = None
     icon_emoji: Optional[str] = None
+    # Slack user/group ids (or the words "here"/"channel") to @-mention in each
+    # alert so it reliably pushes to your phone. May be a single string or list.
+    mentions: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -122,10 +126,22 @@ def load_config(path: str) -> Config:
     raw_slack = raw.get("slack") or {}
     _require(isinstance(raw_slack, dict), "'slack' must be a mapping.")
     webhook = os.environ.get("SLACK_WEBHOOK_URL") or raw_slack.get("webhook_url") or ""
+
+    # `mention` may be a single string or a list; env var SLACK_MENTION overrides.
+    raw_mention = os.environ.get("SLACK_MENTION", raw_slack.get("mention"))
+    if raw_mention is None:
+        mentions: List[str] = []
+    elif isinstance(raw_mention, list):
+        mentions = [str(m).strip() for m in raw_mention if str(m).strip()]
+    else:
+        # Allow a comma/space-separated string too (handy for the env var).
+        mentions = [m.strip() for m in re.split(r"[,\s]+", str(raw_mention)) if m.strip()]
+
     slack = SlackConfig(
         webhook_url=str(webhook).strip(),
         username=raw_slack.get("username"),
         icon_emoji=raw_slack.get("icon_emoji"),
+        mentions=mentions,
     )
 
     # --- misc ---

@@ -45,6 +45,13 @@ seed_on_first_run: true
 # variable instead of putting the secret here — the env var overrides this.
 slack:
   webhook_url: ""   # e.g. "https://hooks.slack.com/services/T000/B000/XXXX"
+
+  # @-mention yourself so alerts reliably push to your phone even if the channel
+  # is muted. Use your Slack *member ID* (Profile → ⋯ → Copy member ID, looks
+  # like U01234ABC), or the words "here" / "channel". Accepts one value or a
+  # list. Overridable with the SLACK_MENTION environment variable.
+  mention: ""       # e.g. "U01234ABC"  (or ["U01234ABC", "U05678XYZ"], or "here")
+
   # Optional overrides for how alerts appear in Slack:
   # username: "Facebook Monitor"
   # icon_emoji: ":mega:"
