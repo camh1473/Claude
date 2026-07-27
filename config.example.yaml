@@ -1,0 +1,50 @@
+# Facebook Page Monitor — example configuration.
+#
+# Copy this file to config.yaml and edit it:
+#     cp config.example.yaml config.yaml
+#
+# config.yaml is git-ignored so you won't accidentally commit secrets.
+
+# How often to poll when running with --loop, in seconds.
+# (Ignored when running with --once; your scheduler controls timing there.)
+poll_interval_seconds: 300
+
+# Where to remember which posts have already been seen. Keep this on
+# persistent storage so the bot doesn't re-alert after a restart.
+state_file: state.json
+
+# The feed(s) to poll. Each source is one page's feed (RSS, Atom, or JSON Feed).
+# Generate these with a service like RSS.app from a public Facebook page URL.
+sources:
+  - name: "Example Public Page"
+    url: "https://rss.app/feeds/REPLACE_WITH_YOUR_FEED.xml"
+  # - name: "Another Page"
+  #   url: "https://rss.app/feeds/ANOTHER_FEED.json"
+
+# What to match. A post triggers an alert if ANY keyword or regex matches
+# its title or body.
+match:
+  case_sensitive: false   # keywords are case-insensitive by default
+  whole_word: false       # true => "sale" won't match inside "wholesale"
+
+  keywords:
+    - "grand opening"
+    - "hiring"
+    - "sale"
+
+  # Optional: full Python regular expressions for advanced patterns.
+  regexes:
+    - "\\b(20|25|50)% off\\b"
+
+# On the very first run for a feed (no saved state), record existing posts as
+# "already seen" WITHOUT alerting, so you aren't flooded by the backlog.
+# Set to false if you DO want to be alerted about currently-existing posts.
+seed_on_first_run: true
+
+# Slack incoming webhook. Prefer setting the SLACK_WEBHOOK_URL environment
+# variable instead of putting the secret here — the env var overrides this.
+slack:
+  webhook_url: ""   # e.g. "https://hooks.slack.com/services/T000/B000/XXXX"
+  # Optional overrides for how alerts appear in Slack:
+  # username: "Facebook Monitor"
+  # icon_emoji: ":mega:"
