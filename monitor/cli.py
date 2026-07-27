@@ -26,6 +26,11 @@ def _build_parser() -> argparse.ArgumentParser:
     mode.add_argument(
         "--loop", action="store_true", help="Run continuously, polling on the configured interval."
     )
+    mode.add_argument(
+        "--test-alert",
+        action="store_true",
+        help="Send one sample alert to Slack (tests your webhook + mention + phone push), then exit.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -56,6 +61,9 @@ def main(argv=None) -> int:
         log.error("Configuration error: %s", exc)
         return 2
 
+    if args.test_alert:
+        return _send_test_alert(config, log)
+
     if not args.loop:
         # Default and --once both mean "one cycle".
         stats = run_cycle(config, dry_run=args.dry_run)
@@ -75,6 +83,38 @@ def main(argv=None) -> int:
     except KeyboardInterrupt:
         log.info("Stopped.")
         return 0
+
+
+def _send_test_alert(config, log) -> int:
+    """Send one sample alert to Slack to verify webhook + mention + phone push."""
+    from .feeds import Post
+    from .notifier import NotifyError, build_slack_payload, send_slack
+
+    post = Post(
+        id="test-alert",
+        title="Test alert from Facebook Page Monitor",
+        body=(
+            "If this reached your phone, your Slack webhook and mention are "
+            "working. You can delete this message."
+        ),
+        url="https://github.com/",
+        published="just now",
+    )
+    payload = build_slack_payload(
+        "Facebook Page Monitor (test)", post, ["test-keyword"], config.slack
+    )
+    try:
+        send_slack(payload, config.slack.webhook_url)
+    except NotifyError as exc:
+        log.error("%s", exc)
+        return 1
+    mention_note = (
+        f" (mentioning {', '.join(config.slack.mentions)})"
+        if config.slack.mentions
+        else " (no mention configured)"
+    )
+    log.info("Test alert sent to Slack%s. Check Slack and your phone.", mention_note)
+    return 0
 
 
 def _log_summary(log, stats) -> None:

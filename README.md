@@ -219,9 +219,62 @@ tests/                  Offline unit tests (no network needed)
 
 ## Testing
 
+Test in layers, cheapest first — each step proves one more piece of the chain.
+
+### 1. Code sanity (no accounts needed)
+
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-The tests cover feed parsing, keyword matching, and state persistence, and run
-fully offline.
+Runs fully offline; covers feed parsing, keyword matching, state persistence,
+and Slack payload/mention building.
+
+### 2. Prove Slack → your phone (isolates the alert half)
+
+Create the Slack webhook (see *Setup*), put it and your `mention` in
+`config.yaml` (or export `SLACK_WEBHOOK_URL` / `SLACK_MENTION`), then:
+
+```bash
+python run.py --config config.yaml --test-alert
+```
+
+This sends one sample alert and exits. You should see it in the Slack channel
+**and** get a push on your phone within a few seconds. If the message shows up
+in Slack but your phone stays quiet, the problem is phone-side: check the Slack
+mobile app's notification settings for that channel, and confirm your `mention`
+is your real member ID.
+
+### 3. Prove the feed + matching (isolates the Facebook half, sends nothing)
+
+Create a feed (e.g. at RSS.app) for the page and add it under `sources`. Then:
+
+```bash
+python run.py --config config.yaml --once --dry-run
+```
+
+`--dry-run` fetches the real feed and logs which posts it pulled and which
+keywords matched, but sends nothing to Slack and doesn't save state. Tune your
+keywords here until the right posts light up. Tip: temporarily set
+`seed_on_first_run: false` and add a keyword you know appears in a recent post,
+so you can see a real match.
+
+### 4. Prove the whole pipeline
+
+With `seed_on_first_run: false` and a keyword that matches a recent post, run it
+for real:
+
+```bash
+python run.py --config config.yaml --once
+```
+
+A matching post should produce a Slack alert on your phone. Run it a second time
+— it should report `new posts=0` (dedup working). Then set `seed_on_first_run`
+back to `true` for normal operation.
+
+### 5. Prove the deployment (GitHub Actions)
+
+After following the *GitHub Actions* setup above, go to the repo's **Actions**
+tab, pick the **Facebook Page Monitor** workflow, and click **Run workflow**
+(that's the `workflow_dispatch` trigger). Watch the run's logs for the
+`cycle done: ...` summary, then let the schedule take over.
