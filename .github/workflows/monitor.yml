@@ -5,11 +5,15 @@ name: Facebook Page Monitor
 # alerted on.
 
 on:
-  schedule:
-    # Every 15 minutes. GitHub's cron minimum is 5 minutes, and scheduled runs
-    # are often delayed under load, so don't expect exact timing. Match this to
-    # how often your feed provider actually refreshes.
-    - cron: "*/15 * * * *"
+  # Scheduled runs are disabled for now — config.ci.yaml still has a placeholder
+  # feed URL, so every scheduled run was failing and emailing a failure notice.
+  # Re-enable by uncommenting the block below once config.ci.yaml has a real
+  # feed URL and keywords.
+  # schedule:
+  #   # Every 15 minutes. GitHub's cron minimum is 5 minutes, and scheduled runs
+  #   # are often delayed under load, so don't expect exact timing. Match this to
+  #   # how often your feed provider actually refreshes.
+  #   - cron: "*/15 * * * *"
   workflow_dispatch: {}   # lets you run it manually from the Actions tab
 
 # Never let two runs overlap and race on the state cache.
